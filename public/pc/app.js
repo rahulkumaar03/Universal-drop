@@ -136,6 +136,7 @@ function handleWsEvent(msg) {
       modalDeviceTitle.textContent = `${msg.data.client.name} (${msg.data.client.type})`;
       modalDeviceIp.textContent = msg.data.client.ip || 'Local Network';
       incomingPairModal.classList.remove('hidden');
+      if (btnModalApprove) setTimeout(() => btnModalApprove.focus(), 50);
       if (window.soundChime) window.soundChime.playPing();
       break;
 
@@ -765,6 +766,17 @@ function setupEventListeners() {
 
   btnHelpClose.addEventListener('click', () => {
     helpModal.classList.add('hidden');
+  });
+
+  // Accessibility: Escape key closes open modals and popovers
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      if (!helpModal.classList.contains('hidden')) {
+        helpModal.classList.add('hidden');
+      } else if (!networkPopover.classList.contains('hidden')) {
+        networkPopover.classList.add('hidden');
+      }
+    }
   });
 
   // Pair new device

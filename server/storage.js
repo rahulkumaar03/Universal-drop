@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const config = require('./config');
-const { sanitizeFilename } = require('./security');
+const { sanitizeFilename, isPotentiallyDangerousFile } = require('./security');
 
 // Ensure directories exist
 function ensureDirectories() {
@@ -16,12 +16,40 @@ function ensureDirectories() {
 ensureDirectories();
 
 /**
+ * Cleans up abandoned temporary files older than maxAgeMs (default: 1 hour)
+ */
+function cleanupTempDirectory(maxAgeMs = config.TEMP_FILE_MAX_AGE_MS || 3600000) {
+  ensureDirectories();
+  try {
+    const files = fs.readdirSync(config.TEMP_DIR);
+    const now = Date.now();
+    let cleanedCount = 0;
+
+    for (const file of files) {
+      const fullPath = path.join(config.TEMP_DIR, file);
+      try {
+        const stat = fs.statSync(fullPath);
+        if (now - stat.mtimeMs > maxAgeMs) {
+          fs.unlinkSync(fullPath);
+          cleanedCount++;
+        }
+      } catch (e) {
+        // Ignore single-file deletion error
+      }
+    }
+    return cleanedCount;
+  } catch (err) {
+    return 0;
+  }
+}
+
+/**
  * Finds a unique filename in target directory to prevent overwriting existing files.
  */
 function getUniqueFilePath(dir, filename) {
   const safeName = sanitizeFilename(filename);
   const ext = path.extname(safeName);
-  const base = path.basename(safeName, ext);
+  const base = path.basename(safeName, ext) || 'file';
 
   let targetPath = path.join(dir, safeName);
   let counter = 1;
@@ -48,7 +76,7 @@ function listReceivedFiles() {
         name: file,
         size: stat.size,
         modifiedAt: stat.mtimeMs,
-        isExecutable: false
+        isExecutable: isPotentiallyDangerousFile(file)
       };
     }).sort((a, b) => b.modifiedAt - a.modifiedAt);
   } catch (err) {
@@ -58,6 +86,7 @@ function listReceivedFiles() {
 
 module.exports = {
   ensureDirectories,
+  cleanupTempDirectory,
   getUniqueFilePath,
   listReceivedFiles
 };

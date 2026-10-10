@@ -99,7 +99,10 @@ function initWebSocket() {
     reconnectTimer = null;
   }
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-  const wsUrl = `${protocol}//${window.location.host}/ws?type=mobile`;
+  let wsUrl = `${protocol}//${window.location.host}/ws?type=mobile`;
+  if (sessionId && authToken) {
+    wsUrl += `&session=${encodeURIComponent(sessionId)}&token=${encodeURIComponent(authToken)}`;
+  }
 
   try {
     if (ws) {
@@ -349,15 +352,17 @@ async function uploadFileChunked(file) {
 
   const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
 
-  // Step 1: Calculate SHA-256 of file using Web Crypto API
+  // Step 1: Calculate SHA-256 of file using Web Crypto API (for files <= 50MB to protect mobile memory)
   let sha256Hex = '';
-  try {
-    const buffer = await file.arrayBuffer();
-    const digest = await crypto.subtle.digest('SHA-256', buffer);
-    const hashArray = Array.from(new Uint8Array(digest));
-    sha256Hex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-  } catch (e) {
-    console.warn('Could not compute client SHA-256, server will compute:', e);
+  if (file.size <= 50 * 1024 * 1024) {
+    try {
+      const buffer = await file.arrayBuffer();
+      const digest = await crypto.subtle.digest('SHA-256', buffer);
+      const hashArray = Array.from(new Uint8Array(digest));
+      sha256Hex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    } catch (e) {
+      console.warn('Could not compute client SHA-256, server will compute:', e);
+    }
   }
 
   // Step 2: Negotiate transfer start
@@ -423,6 +428,8 @@ async function uploadFileChunked(file) {
     const etaSec = speedBps > 0 ? Math.ceil(remainingBytes / speedBps) : 0;
 
     transferBar.style.width = `${percent}%`;
+    const pb = document.getElementById('mobileProgressBar');
+    if (pb) pb.setAttribute('aria-valuenow', percent);
     transferPercent.textContent = `${percent}%`;
     transferSpeed.textContent = `${speedMB} MB/s`;
     transferEta.textContent = `ETA: ${etaSec}s`;
@@ -455,8 +462,9 @@ async function uploadFileChunked(file) {
 
 // Fetch pending/queued files from PC
 async function fetchPendingFiles() {
+  if (!authToken || !sessionId) return;
   try {
-    const res = await fetch('/api/files/pending');
+    const res = await fetch(`/api/files/pending?sessionId=${encodeURIComponent(sessionId)}&token=${encodeURIComponent(authToken)}`);
     if (res.ok) {
       const data = await res.json();
       if (Array.isArray(data.files)) {
@@ -479,10 +487,16 @@ function handleIncomingFileOffer(fileMeta) {
   const empty = mobileReceivedList.querySelector('.empty-received');
   if (empty) empty.remove();
 
+  const authQuery = (sessionId && authToken) ? `&sessionId=${encodeURIComponent(sessionId)}&token=${encodeURIComponent(authToken)}` : '';
+  const initialAuthQuery = (sessionId && authToken) ? `?sessionId=${encodeURIComponent(sessionId)}&token=${encodeURIComponent(authToken)}` : '';
+
+  const previewSrc = fileMeta.downloadUrl + initialAuthQuery;
+  const downloadHref = `${fileMeta.downloadUrl}?download=1${authQuery}`;
+
   const isImg = (fileMeta.mimeType && fileMeta.mimeType.startsWith('image/')) ||
                 /\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(fileMeta.fileName);
   const previewHtml = isImg 
-    ? `<img src="${fileMeta.downloadUrl}" class="mobile-received-thumb" alt="Preview" onclick="window.open('${fileMeta.downloadUrl}', '_blank')" title="Tap to view full image">` 
+    ? `<img src="${previewSrc}" class="mobile-received-thumb" alt="Preview of ${escapeHtml(fileMeta.fileName)}" onclick="window.open('${previewSrc}', '_blank')" title="Tap to view full image">` 
     : '';
 
   const item = document.createElement('div');
@@ -493,7 +507,7 @@ function handleIncomingFileOffer(fileMeta) {
       <span class="received-name" title="${escapeHtml(fileMeta.fileName)}">${escapeHtml(fileMeta.fileName)}</span>
       <span class="received-meta">${formatBytes(fileMeta.fileSize)} • Ready to Save</span>
     </div>
-    <a href="${fileMeta.downloadUrl}?download=1" class="btn btn-sm btn-primary" download="${escapeHtml(fileMeta.fileName)}" style="flex-shrink: 0;">Save</a>
+    <a href="${downloadHref}" class="btn btn-sm btn-primary" download="${escapeHtml(fileMeta.fileName)}" style="flex-shrink: 0;" aria-label="Save ${escapeHtml(fileMeta.fileName)}">Save</a>
   `;
   mobileReceivedList.prepend(item);
 

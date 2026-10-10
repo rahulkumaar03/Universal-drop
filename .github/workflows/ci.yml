@@ -1,0 +1,56 @@
+name: UniversalDrop CI/CD Quality Gates
+
+on:
+  push:
+    branches: [ main, audit-production-hardening ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test-and-audit:
+    name: Test & Security Audit (${{ matrix.os }} - Node ${{ matrix.node-version }})
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        node-version: [18.x, 20.x, 22.x]
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Syntax & Static Code Checks
+        run: |
+          node --check index.js
+          node --check server/app.js
+          node --check server/config.js
+          node --check server/network.js
+          node --check server/security.js
+          node --check server/session.js
+          node --check server/storage.js
+          node --check server/transfer.js
+
+      - name: Dependency Security Audit
+        run: npm audit --audit-level=high
+
+      - name: Execute Full Test Suite
+        run: npm test
+
+  quality-gate:
+    name: Production Release Quality Gate
+    needs: test-and-audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Quality Gate Status
+        run: echo "All functional, security, and performance quality gates passed successfully."

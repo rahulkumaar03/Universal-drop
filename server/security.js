@@ -81,10 +81,82 @@ function safeCompare(a, b) {
   return crypto.timingSafeEqual(bufA, bufB);
 }
 
+/**
+ * Checks if a filename has a potentially dangerous/executable extension
+ */
+function isPotentiallyDangerousFile(filename) {
+  if (!filename || typeof filename !== 'string') return false;
+  const ext = path.extname(filename).toLowerCase();
+  const dangerousExts = new Set([
+    '.exe', '.bat', '.cmd', '.ps1', '.vbs', '.js', '.vbe', '.wsf', '.wsh',
+    '.scr', '.pif', '.hta', '.jar', '.com', '.msi', '.msp', '.reg', '.dll'
+  ]);
+  return dangerousExts.has(ext);
+}
+
+/**
+ * In-memory sliding-window rate limiter with lockout protection
+ */
+class RateLimiter {
+  constructor({ maxAttempts = 5, windowMs = 60000, lockoutMs = 120000 } = {}) {
+    this.maxAttempts = maxAttempts;
+    this.windowMs = windowMs;
+    this.lockoutMs = lockoutMs;
+    this.records = new Map();
+  }
+
+  isLocked(key) {
+    const record = this.records.get(key);
+    if (!record) return false;
+    const now = Date.now();
+    if (record.lockedUntil && now < record.lockedUntil) {
+      return true;
+    }
+    return false;
+  }
+
+  getLockoutRemainingMs(key) {
+    const record = this.records.get(key);
+    if (!record || !record.lockedUntil) return 0;
+    return Math.max(0, record.lockedUntil - Date.now());
+  }
+
+  recordAttempt(key, success) {
+    const now = Date.now();
+    let record = this.records.get(key);
+    if (!record) {
+      record = { attempts: [], lockedUntil: 0 };
+      this.records.set(key, record);
+    }
+
+    if (success) {
+      this.records.delete(key);
+      return { allowed: true };
+    }
+
+    // Clean old attempts
+    record.attempts = record.attempts.filter(t => now - t < this.windowMs);
+    record.attempts.push(now);
+
+    if (record.attempts.length >= this.maxAttempts) {
+      record.lockedUntil = now + this.lockoutMs;
+      return { allowed: false, locked: true, retryAfterMs: this.lockoutMs };
+    }
+
+    return { allowed: true, remaining: this.maxAttempts - record.attempts.length };
+  }
+
+  reset(key) {
+    this.records.delete(key);
+  }
+}
+
 module.exports = {
   sanitizeFilename,
   generateSecureToken,
   generatePairingPin,
   sha256,
-  safeCompare
+  safeCompare,
+  isPotentiallyDangerousFile,
+  RateLimiter
 };

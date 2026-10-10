@@ -74,6 +74,8 @@ class SessionManager {
 
     session.status = 'connected';
     session.authToken = generateSecureToken(32);
+    // Single-use token security: invalidate pairing token upon connection
+    session.pairingToken = null;
     session.expiresAt = Date.now() + config.SESSION_TIMEOUT_MS;
     session.lastActivityAt = Date.now();
 
@@ -92,6 +94,8 @@ class SessionManager {
 
     session.status = 'rejected';
     session.authToken = null;
+    session.pairingToken = null;
+    session.pairingPin = null;
     return { success: true };
   }
 

@@ -75,6 +75,21 @@ class TransferEngine {
       throw new Error(`Transfer is not in active state (status: ${transfer.status})`);
     }
 
+    // Chunk sequence integrity check
+    if (chunkIndex !== transfer.chunksReceived) {
+      throw new Error(`Invalid chunk sequence: expected chunk ${transfer.chunksReceived}, received ${chunkIndex}`);
+    }
+
+    // Chunk size bound check
+    if (chunkBuffer.length > (config.MAX_CHUNK_SIZE || 2 * 1024 * 1024)) {
+      throw new Error(`Chunk size ${chunkBuffer.length} exceeds maximum allowed`);
+    }
+
+    // Declared file size boundary check
+    if (transfer.bytesReceived + chunkBuffer.length > transfer.fileSize) {
+      throw new Error(`Received bytes exceed declared file size (${transfer.fileSize} bytes)`);
+    }
+
     // Write chunk to file stream
     await new Promise((resolve, reject) => {
       const ok = transfer.writeStream.write(chunkBuffer, (err) => {
@@ -120,6 +135,11 @@ class TransferEngine {
     const transfer = this.activeTransfers.get(transferId);
     if (!transfer) {
       throw new Error('Transfer not found');
+    }
+
+    // Verify all declared bytes were received
+    if (transfer.bytesReceived !== transfer.fileSize) {
+      throw new Error(`Incomplete transfer: received ${transfer.bytesReceived} of ${transfer.fileSize} bytes`);
     }
 
     // Close write stream
@@ -221,16 +241,104 @@ class TransferEngine {
   }
 
   /**
-   * Registers a file to be sent from PC to Phone
+   * Cancels all active transfers (e.g. on session disconnect)
+   */
+  cancelAllTransfers() {
+    const ids = Array.from(this.activeTransfers.keys());
+    for (const id of ids) {
+      this.cancelTransfer(id);
+    }
+    return ids.length;
+  }
+
+  /**
+   * Cleans up stale active transfers that haven't received chunks recently
+   */
+  cleanupStaleTransfers(maxIdleMs = config.TRANSFER_IDLE_TIMEOUT_MS || 60000) {
+    const now = Date.now();
+    let cleanedCount = 0;
+    for (const [id, t] of this.activeTransfers.entries()) {
+      if (t.status === 'transferring' && now - t.lastChunkTime > maxIdleMs) {
+        this.cancelTransfer(id);
+        cleanedCount++;
+      }
+    }
+    return cleanedCount;
+  }
+
+  /**
+   * Streams an incoming readable stream directly to disk while computing SHA-256 with bounded memory
+   */
+  async prepareOutgoingStream(fileId, inputStream, fileName, mimeType = 'application/octet-stream') {
+    const safeName = sanitizeFilename(fileName || 'file.bin');
+    const tempPath = path.join(config.TEMP_DIR, `outgoing_${fileId}_${safeName}`);
+    const writeStream = fs.createWriteStream(tempPath, { flags: 'w' });
+    const hash = crypto.createHash('sha256');
+
+    let totalBytes = 0;
+
+    await new Promise((resolve, reject) => {
+      inputStream.on('data', (chunk) => {
+        totalBytes += chunk.length;
+        if (totalBytes > config.MAX_FILE_SIZE) {
+          writeStream.destroy();
+          try { fs.unlinkSync(tempPath); } catch (e) {}
+          return reject(new Error(`File size exceeds maximum allowed (${config.MAX_FILE_SIZE} bytes)`));
+        }
+        hash.update(chunk);
+      });
+
+      inputStream.on('error', (err) => {
+        writeStream.destroy();
+        try { fs.unlinkSync(tempPath); } catch (e) {}
+        reject(err);
+      });
+
+      inputStream.pipe(writeStream);
+
+      writeStream.on('finish', resolve);
+      writeStream.on('error', (err) => {
+        try { fs.unlinkSync(tempPath); } catch (e) {}
+        reject(err);
+      });
+    });
+
+    const sha = hash.digest('hex');
+
+    const meta = {
+      id: fileId,
+      filePath: tempPath,
+      fileName: safeName,
+      fileSize: totalBytes,
+      mimeType,
+      sha256: sha,
+      chunkSize: config.DEFAULT_CHUNK_SIZE,
+      totalChunks: Math.ceil(totalBytes / config.DEFAULT_CHUNK_SIZE),
+      createdAt: Date.now()
+    };
+
+    this.outgoingFiles.set(fileId, meta);
+    return meta;
+  }
+
+  /**
+   * Registers a file to be sent from PC to Phone (streams file to hash without buffering entire file in RAM)
    */
   prepareOutgoingFile(fileId, filePath, fileName, fileSize, mimeType) {
     const stats = fs.statSync(filePath);
     const safeName = sanitizeFilename(fileName || path.basename(filePath));
     const size = fileSize || stats.size;
 
-    // Compute SHA-256 for the outgoing file
-    const fileBuffer = fs.readFileSync(filePath);
-    const sha = crypto.createHash('sha256').update(fileBuffer).digest('hex');
+    // Use streaming read for hash computation instead of fs.readFileSync to preserve RAM
+    const hash = crypto.createHash('sha256');
+    const fd = fs.openSync(filePath, 'r');
+    const buffer = Buffer.alloc(64 * 1024);
+    let bytesRead = 0;
+    while ((bytesRead = fs.readSync(fd, buffer, 0, buffer.length, null)) > 0) {
+      hash.update(buffer.subarray(0, bytesRead));
+    }
+    fs.closeSync(fd);
+    const sha = hash.digest('hex');
 
     const meta = {
       id: fileId,

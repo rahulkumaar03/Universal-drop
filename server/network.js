@@ -16,11 +16,16 @@ function getNetworkInterfaces() {
         const isHotspot = addr.address.startsWith('192.168.137.') || name.toLowerCase().includes('hotspot');
         const isWiFi = name.toLowerCase().includes('wi-fi') || name.toLowerCase().includes('wireless') || name.toLowerCase().includes('wlan');
         const isEthernet = name.toLowerCase().includes('ethernet') || name.toLowerCase().includes('eth');
+        const isVirtual = /vethernet|virtual|vmware|vbox|docker|tailscale|zerotier|wsl/i.test(name);
 
         let score = 10;
         if (isHotspot) score += 50; // Hotspot is highest priority for direct offline transfer
         else if (isWiFi) score += 40;
         else if (isEthernet) score += 30;
+
+        if (isVirtual) {
+          score -= 50; // Virtual/tunnel interfaces should not override physical Wi-Fi/Ethernet
+        }
 
         // Private LAN IP checks
         if (addr.address.startsWith('192.168.') || addr.address.startsWith('10.') || /^172\.(1[6-9]|2\d|3[01])\./.test(addr.address)) {
@@ -34,6 +39,7 @@ function getNetworkInterfaces() {
           isWiFi,
           isHotspot,
           isEthernet,
+          isVirtual,
           score
         });
       }
@@ -44,6 +50,15 @@ function getNetworkInterfaces() {
   candidates.sort((a, b) => b.score - a.score);
 
   return candidates;
+}
+
+/**
+ * Returns true if an IP is loopback / localhost.
+ */
+function isLoopbackAddress(ip) {
+  if (!ip) return false;
+  const cleanIp = ip.replace(/^::ffff:/, '');
+  return cleanIp === '127.0.0.1' || cleanIp === '::1' || cleanIp === 'localhost';
 }
 
 /**
@@ -63,5 +78,6 @@ function getPrimaryLocalIp(selectedIp = null) {
 
 module.exports = {
   getNetworkInterfaces,
-  getPrimaryLocalIp
+  getPrimaryLocalIp,
+  isLoopbackAddress
 };

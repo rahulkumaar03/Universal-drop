@@ -453,7 +453,7 @@
         </div>
       </div>
 
-      <h3 class="modal-main-title">Incoming Device Connection</h3>
+      <h3 class="modal-main-title" id="pairModalHeading">Incoming Device Connection</h3>
       <p class="modal-main-desc">A device on your local network wants to establish a secure transfer session.</p>
 
       <div class="modal-info-panel">
@@ -472,16 +472,16 @@
       </div>
 
       <div class="modal-dialog-buttons">
-        <button class="btn-modal-cancel" id="btnModalDecline">Decline</button>
-        <button class="btn-modal-approve" id="btnModalApprove">Approve Connection</button>
+        <button class="btn-modal-cancel" id="btnModalDecline" aria-label="Decline incoming connection">Decline</button>
+        <button class="btn-modal-approve" id="btnModalApprove" aria-label="Approve incoming connection">Approve Connection</button>
       </div>
     </div>
   </div>
 
   <!-- Modal: Help / Instructions Dialog -->
-  <div class="glass-modal-backdrop hidden" id="helpModal">
+  <div class="glass-modal-backdrop hidden" id="helpModal" role="dialog" aria-modal="true" aria-labelledby="helpModalHeading">
     <div class="glass-modal-dialog">
-      <h3 class="modal-main-title">How to Use UniversalDrop</h3>
+      <h3 class="modal-main-title" id="helpModalHeading">How to Use UniversalDrop</h3>
       <p class="modal-main-desc">Direct offline-first transfer between PC and phone without cloud accounts.</p>
 
       <div class="help-steps-list">
@@ -506,13 +506,13 @@
       </div>
 
       <div class="modal-dialog-buttons">
-        <button class="btn-modal-approve full-width" id="btnHelpClose">Got it</button>
+        <button class="btn-modal-approve full-width" id="btnHelpClose" aria-label="Close help modal">Got it</button>
       </div>
     </div>
   </div>
 
   <!-- Toast Notification Container -->
-  <div class="glass-toast hidden" id="appToast"></div>
+  <div class="glass-toast hidden" id="appToast" role="status" aria-live="polite"></div>
 
   <!-- Scripts -->
   <script src="/shared/chime.js"></script>
