@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UniversalDrop | Local File Transfer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/pc/style.css">
+</head>
+<body class="theme-light">
+  <!-- Soft Ambient Flowing Background -->
+  <div class="ambient-canvas">
+    <div class="ambient-orb orb-1"></div>
+    <div class="ambient-orb orb-2"></div>
+    <div class="ambient-orb orb-3"></div>
+  </div>
+
+  <!-- macOS Desktop Application Window Frame -->
+  <div class="window-shell">
+    <!-- macOS Window Titlebar / Traffic Lights -->
+    <div class="window-decorations">
+      <div class="traffic-lights">
+        <span class="traffic-light light-close" title="Close"></span>
+        <span class="traffic-light light-minimize" title="Minimize"></span>
+        <span class="traffic-light light-fullscreen" title="Expand"></span>
+      </div>
+    </div>
+
+    <div class="app-workspace">
+      <!-- Left Glass Sidebar -->
+      <aside class="sidebar">
+        <div class="sidebar-brand">
+          <div class="brand-symbol">
+            <!-- UniversalDrop Arrow Glyphs -->
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <path d="M7 10l5-5 5 5" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M12 5v14" stroke-linecap="round"/>
+              <path d="M17 14l-5 5-5-5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <div class="brand-titles">
+            <h1 class="app-title">UniversalDrop</h1>
+            <span class="app-subtitle">Local File Transfer</span>
+          </div>
+        </div>
+
+        <!-- Sidebar Navigation Items -->
+        <nav class="sidebar-nav">
+          <button class="nav-item active" data-view="home">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+              <polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
+            <span>Home</span>
+          </button>
+
+          <button class="nav-item" data-view="send">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="22" y1="2" x2="11" y2="13"/>
+              <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+            </svg>
+            <span>Send Files</span>
+          </button>
+
+          <button class="nav-item" data-view="receive">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            </svg>
+            <span>Receive Files</span>
+          </button>
+
+          <button class="nav-item" data-view="devices">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+              <line x1="8" y1="21" x2="16" y2="21"/>
+              <line x1="12" y1="17" x2="12" y2="21"/>
+            </svg>
+            <span>Devices</span>
+          </button>
+
+          <button class="nav-item" data-view="messages">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+            </svg>
+            <span>Messages</span>
+          </button>
+
+          <button class="nav-item" data-view="history">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <polyline points="12 6 12 12 16 14"/>
+            </svg>
+            <span>History</span>
+          </button>
+
+          <button class="nav-item" data-view="settings">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+            </svg>
+            <span>Settings</span>
+          </button>
+        </nav>
+
+        <!-- Sidebar Bottom Status Card -->
+        <div class="sidebar-status-card">
+          <div class="status-indicator-pill">
+            <span class="status-dot-green"></span>
+            <span class="status-text-ready" id="sidebarStatusText">Ready</span>
+          </div>
+          <span class="app-version">v0.1.0</span>
+        </div>
+      </aside>
+
+      <!-- Main Glass Workspace -->
+      <main class="main-stage">
+        <!-- Main Top Bar Header -->
+        <header class="stage-header">
+          <div class="header-intro">
+            <h2 class="welcome-heading">Welcome to UniversalDrop</h2>
+            <p class="welcome-subtitle">Seamless, fast and private file transfer across your devices.</p>
+          </div>
+
+          <div class="header-tools">
+            <!-- Wi-Fi / Network Indicator Dropdown -->
+            <div class="network-pill-container" id="networkPillContainer">
+              <button class="network-pill-btn" id="networkPillBtn" title="Switch Network Interface">
+                <svg class="wifi-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M5 12.55a11 11 0 0 1 14.08 0"/>
+                  <path d="M1.42 9a16 16 0 0 1 21.16 0"/>
+                  <path d="M8.53 16.11a6 6 0 0 1 6.95 0"/>
+                  <line x1="12" y1="20" x2="12.01" y2="20"/>
+                </svg>
+                <span id="activeNetworkLabel">Wi-Fi 192.168.1.9</span>
+                <svg class="chevron-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="6 9 12 15 18 9"/>
+                </svg>
+              </button>
+
+              <!-- Network Interfaces Dropdown Popover -->
+              <div class="network-popover hidden" id="networkPopover">
+                <div class="popover-title">Available Network Interfaces</div>
+                <div class="interfaces-list" id="interfacesList">
+                  <!-- Injected via app.js -->
+                </div>
+              </div>
+            </div>
+
+            <!-- Help Button -->
+            <button class="circle-tool-btn" id="btnHelp" title="UniversalDrop Help & Instructions" aria-label="Help">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+                <line x1="12" y1="17" x2="12.01" y2="17"/>
+              </svg>
+            </button>
+
+            <!-- Theme Toggle Button -->
+            <button class="circle-tool-btn" id="btnThemeToggle" title="Toggle Appearance" aria-label="Appearance">
+              <svg class="theme-icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+              </svg>
+              <svg class="theme-icon-sun hidden" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="5"/>
+                <line x1="12" y1="1" x2="12" y2="3"/>
+                <line x1="12" y1="21" x2="12" y2="23"/>
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+                <line x1="1" y1="12" x2="3" y2="12"/>
+                <line x1="21" y1="12" x2="23" y2="12"/>
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+              </svg>
+            </button>
+          </div>
+        </header>
+
+        <!-- Main Two-Column Bento Grid -->
+        <div class="content-bento-grid">
+          <!-- Left Column -->
+          <div class="bento-column column-left">
+            <!-- 1. Connect Your Phone Glass Card -->
+            <section class="glass-card connect-phone-card">
+              <div class="card-caption-row">
+                <div class="caption-icon-badge badge-blue">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+                  </svg>
+                </div>
+                <div class="caption-text-group">
+                  <h3 class="card-heading">Connect Your Phone</h3>
+                  <p class="card-subheading">Scan the QR code with your phone camera or open the link</p>
+                </div>
+              </div>
+
+              <!-- Clean QR Code Display Container -->
+              <div class="qr-display-frame">
+                <div class="qr-white-card">
+                  <img id="qrCodeImg" src="" alt="Pairing QR Code" class="qr-image">
+                  <div id="qrLoadingSpinner" class="qr-loader">Loading QR...</div>
+                </div>
+              </div>
+
+              <!-- Pair Code & Local URL Rows -->
+              <div class="connection-fields-list">
+                <!-- Pair Code Row -->
+                <div class="field-item-row">
+                  <span class="field-label">Pair Code</span>
+                  <div class="field-value-pill">
+                    <span class="code-characters" id="pairCodeDisplay">- - - - - -</span>
+                    <button class="pill-copy-btn" id="btnCopyPairCode" title="Copy Pair Code" aria-label="Copy Pair Code">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Local URL Row -->
+                <div class="field-item-row">
+                  <span class="field-label">Local URL</span>
+                  <div class="field-input-box">
+                    <input type="text" id="localUrlInput" readonly value="http://192.168.1.9:5274">
+                    <button class="input-copy-btn" id="btnCopyUrl" title="Copy URL" aria-label="Copy URL">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Informational Footer Notice -->
+              <div class="card-info-notice">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"/>
+                  <line x1="12" y1="16" x2="12" y2="12"/>
+                  <line x1="12" y1="8" x2="12.01" y2="8"/>
+                </svg>
+                <span>Keep this window open while transferring files.</span>
+              </div>
+            </section>
+
+            <!-- 2. Send Files Glass Card -->
+            <section class="glass-card send-files-card">
+              <div class="card-caption-row">
+                <div class="caption-icon-badge badge-blue">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="22" y1="2" x2="11" y2="13"/>
+                    <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                  </svg>
+                </div>
+                <div class="caption-text-group">
+                  <h3 class="card-heading">Send Files</h3>
+                  <p class="card-subheading">Drag and drop files here or choose files to send to your connected device</p>
+                </div>
+              </div>
+
+              <!-- Large Dashed Drag & Drop Zone -->
+              <div class="drop-dashed-canvas" id="fileDropZone">
+                <input type="file" id="systemFileInput" multiple class="sr-only-input">
+                <div class="cloud-symbol">
+                  <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                    <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/>
+                    <polyline points="14 13 12 11 10 13"/>
+                    <line x1="12" y1="11" x2="12" y2="17"/>
+                  </svg>
+                </div>
+                <span class="drop-text-primary">Drag & drop files here</span>
+                <span class="drop-text-or">or</span>
+                <button type="button" class="btn-blue-action" id="btnSelectFiles">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                    <circle cx="8.5" cy="8.5" r="1.5"/>
+                    <polyline points="21 15 16 10 5 21"/>
+                  </svg>
+                  Select Files
+                </button>
+                <span class="drop-text-spec">Supports: Images, Videos, Documents, Archives (Max 5GB)</span>
+              </div>
+            </section>
+          </div>
+
+          <!-- Right Column -->
+          <div class="bento-column column-right">
+            <!-- 3. Connected Devices Glass Card -->
+            <section class="glass-card connected-devices-card">
+              <div class="card-header-actions">
+                <div class="caption-left">
+                  <div class="caption-icon-badge badge-blue">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                      <circle cx="9" cy="7" r="4"/>
+                      <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                      <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                    </svg>
+                  </div>
+                  <div class="caption-text-group">
+                    <h3 class="card-heading">Connected Devices</h3>
+                    <p class="card-subheading" id="connectedCountSubtitle">0 devices connected</p>
+                  </div>
+                </div>
+
+                <button class="pill-action-btn" id="btnPairNewDevice">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                    <line x1="12" y1="5" x2="12" y2="19"/>
+                    <line x1="5" y1="12" x2="19" y2="12"/>
+                  </svg>
+                  Pair New Device
+                </button>
+              </div>
+
+              <!-- Connected Device Item Container -->
+              <div class="device-card-state" id="devicesContainer">
+                <!-- Dynamically populated or empty state -->
+                <div class="empty-state-notice" id="emptyDevicesState">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                    <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/>
+                    <line x1="12" y1="18" x2="12.01" y2="18"/>
+                  </svg>
+                  <span>No devices connected yet. Scan the QR code to pair.</span>
+                </div>
+              </div>
+            </section>
+
+            <!-- 4. Messages & Clipboard Glass Card (Live Chat) -->
+            <section class="glass-card chat-card" id="chatSection">
+              <div class="card-header-actions">
+                <div class="caption-left">
+                  <div class="caption-icon-badge badge-blue">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                    </svg>
+                  </div>
+                  <div class="caption-text-group">
+                    <h3 class="card-heading">Messages & Clipboard</h3>
+                    <p class="card-subheading">Instant text, notes & links from phone</p>
+                  </div>
+                </div>
+                <div class="chat-header-actions">
+                  <span class="active-count-label" id="chatMessageCount">0 messages</span>
+                  <button class="pill-ghost-btn" id="btnClearChat" title="Clear chat history">Clear</button>
+                </div>
+              </div>
+
+              <!-- Chat Stream Box -->
+              <div class="chat-stream-box" id="chatStreamBox">
+                <div class="empty-chat-state" id="emptyChatState">
+                  <div class="empty-bubble-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                    </svg>
+                  </div>
+                  <h4 class="empty-title">No messages yet</h4>
+                  <p class="empty-sub">Type below or send text/links from your phone.</p>
+                </div>
+                <div class="chat-bubbles-list" id="chatBubblesList"></div>
+              </div>
+
+              <!-- Chat Input Bar with Image Paste & Attachment Support -->
+              <form class="chat-compose-box" id="chatComposeForm">
+                <button type="button" class="btn-chat-attach" id="btnChatAttach" title="Attach Image or File" aria-label="Attach File">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                    <circle cx="8.5" cy="8.5" r="1.5"/>
+                    <polyline points="21 15 16 10 5 21"/>
+                  </svg>
+                </button>
+                <input type="text" id="pcChatInput" placeholder="Type a note or press Ctrl+V to paste an image..." autocomplete="off">
+                <button type="submit" class="btn-send-message" id="btnSendChat" title="Send to Phone" aria-label="Send">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                    <line x1="22" y1="2" x2="11" y2="13"/>
+                    <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                  </svg>
+                </button>
+              </form>
+            </section>
+
+            <!-- 5. Live Transfers Glass Card -->
+            <section class="glass-card live-transfers-card">
+              <div class="card-header-actions">
+                <div class="caption-left">
+                  <div class="caption-icon-badge badge-blue">
+                    <!-- Activity Waveform Icon -->
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                    </svg>
+                  </div>
+                  <h3 class="card-heading">Live Transfers</h3>
+                </div>
+                <span class="active-count-label" id="liveTransferCount">0 active transfers</span>
+              </div>
+
+              <!-- Transfers List & Empty State Container -->
+              <div class="transfers-container" id="liveTransfersList">
+                <div class="empty-state-transfers" id="emptyTransfersState">
+                  <div class="empty-bubble-icon">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                      <polyline points="14 2 14 8 20 8"/>
+                    </svg>
+                  </div>
+                  <h4 class="empty-title">No active transfers</h4>
+                  <p class="empty-sub">Send files to see live progress here.</p>
+                </div>
+              </div>
+            </section>
+
+            <!-- 5. Transfer History Glass Card -->
+            <section class="glass-card history-card">
+              <div class="card-header-actions">
+                <div class="caption-left">
+                  <div class="caption-icon-badge badge-blue">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="12" r="10"/>
+                      <polyline points="12 6 12 12 16 14"/>
+                    </svg>
+                  </div>
+                  <h3 class="card-heading">Transfer History</h3>
+                </div>
+                <button class="pill-ghost-btn" id="btnClearHistory">Clear</button>
+              </div>
+
+              <!-- History Records List -->
+              <div class="history-records-list" id="historyRecordsList">
+                <!-- Dynamically populated or empty state -->
+                <div class="empty-history-text" id="emptyHistoryState">No transfer history recorded yet.</div>
+              </div>
+            </section>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- Modal: Incoming Pairing Request (Apple Glass Dialog) -->
+  <div class="glass-modal-backdrop hidden" id="incomingPairModal">
+    <div class="glass-modal-dialog">
+      <div class="modal-radar-visual">
+        <div class="radar-pulse-ring"></div>
+        <div class="radar-device-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/>
+            <line x1="12" y1="18" x2="12.01" y2="18"/>
+          </svg>
+        </div>
+      </div>
+
+      <h3 class="modal-main-title" id="pairModalHeading">Incoming Device Connection</h3>
+      <p class="modal-main-desc">A device on your local network wants to establish a secure transfer session.</p>
+
+      <div class="modal-info-panel">
+        <div class="info-row">
+          <span class="info-key">Device:</span>
+          <span class="info-val font-semibold" id="modalDeviceTitle">Android Device</span>
+        </div>
+        <div class="info-row">
+          <span class="info-key">Local IP:</span>
+          <span class="info-val font-mono" id="modalDeviceIp">192.168.1.5</span>
+        </div>
+        <div class="info-row">
+          <span class="info-key">Security:</span>
+          <span class="info-val text-blue">Direct Local LAN • SHA-256</span>
+        </div>
+      </div>
+
+      <div class="modal-dialog-buttons">
+        <button class="btn-modal-cancel" id="btnModalDecline" aria-label="Decline incoming connection">Decline</button>
+        <button class="btn-modal-approve" id="btnModalApprove" aria-label="Approve incoming connection">Approve Connection</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Help / Instructions Dialog -->
+  <div class="glass-modal-backdrop hidden" id="helpModal" role="dialog" aria-modal="true" aria-labelledby="helpModalHeading">
+    <div class="glass-modal-dialog">
+      <h3 class="modal-main-title" id="helpModalHeading">How to Use UniversalDrop</h3>
+      <p class="modal-main-desc">Direct offline-first transfer between PC and phone without cloud accounts.</p>
+
+      <div class="help-steps-list">
+        <div class="help-step">
+          <div class="step-num">1</div>
+          <div class="step-desc">
+            <strong>Same Local Network:</strong> Ensure your phone and PC are connected to the same Wi-Fi, Ethernet, or Mobile Hotspot.
+          </div>
+        </div>
+        <div class="help-step">
+          <div class="step-num">2</div>
+          <div class="step-desc">
+            <strong>Scan QR or Enter PIN:</strong> Open your phone camera or browser and point it at the QR code on the screen.
+          </div>
+        </div>
+        <div class="help-step">
+          <div class="step-num">3</div>
+          <div class="step-desc">
+            <strong>Approve & Drop Files:</strong> Click "Approve Connection" on this PC. You can now drag and drop files or stream photos instantly!
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-dialog-buttons">
+        <button class="btn-modal-approve full-width" id="btnHelpClose" aria-label="Close help modal">Got it</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div class="glass-toast hidden" id="appToast" role="status" aria-live="polite"></div>
+
+  <!-- Scripts -->
+  <script src="/shared/chime.js"></script>
+  <script src="/pc/app.js"></script>
+</body>
+</html>

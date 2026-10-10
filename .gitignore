@@ -1,0 +1,24 @@
+node_modules/
+
+# Received and transferred user files
+received_files/
+uploads/
+downloads/
+temp/
+tmp/
+
+# Secrets and environment configuration
+.env
+.env.*
+!.env.example
+
+# Logs and generated output
+*.log
+npm-debug.log*
+coverage/
+dist/
+build/
+
+# Operating system files
+.DS_Store
+Thumbs.db

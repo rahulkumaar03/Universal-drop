@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UniversalDrop | Mobile</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/mobile/style.css">
+</head>
+<body>
+  <div class="mobile-container">
+    <!-- Top Mobile Header -->
+    <header class="mobile-header">
+      <div class="header-brand">
+        <div class="brand-logo" aria-hidden="true">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <path d="M12 2v8m0 0l4-4m-4 4L8 6" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M20 14v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-4" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="brand-info">
+          <h1 class="brand-title">UniversalDrop</h1>
+          <span class="brand-subtitle">DIRECT LOCAL TRANSFER</span>
+        </div>
+      </div>
+
+      <div class="header-status">
+        <span class="status-indicator" id="statusDot" aria-hidden="true"></span>
+        <span class="status-label" id="statusText" role="status" aria-live="polite">Connecting</span>
+      </div>
+    </header>
+
+    <!-- State 1: Handshake / Pairing View -->
+    <main id="pairingView" class="view-panel" aria-label="Pairing screen">
+      <div class="handshake-card">
+        <div class="radar-box" aria-hidden="true">
+          <div class="radar-wave"></div>
+          <div class="radar-center-icon">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+              <line x1="8" y1="21" x2="16" y2="21"/>
+              <line x1="12" y1="17" x2="12" y2="21"/>
+            </svg>
+          </div>
+        </div>
+
+        <h2 class="handshake-title" id="handshakeTitle">Requesting Approval</h2>
+        <p class="handshake-desc" id="handshakeDesc">Look at your PC screen and tap <strong>"Approve"</strong> to establish the secure connection.</p>
+
+        <!-- Manual PIN Fallback Form -->
+        <div id="pinFallbackForm" class="pin-fallback-box hidden">
+          <p class="pin-hint">Enter the 6-digit PIN displayed on your PC agent:</p>
+          <div class="pin-inputs">
+            <input type="text" id="manualPinInput" maxlength="6" placeholder="PIN" autocomplete="off" autocapitalize="characters" aria-label="Enter 6-digit pairing PIN">
+            <button id="btnSubmitPin" class="btn btn-primary">Connect</button>
+          </div>
+        </div>
+
+        <div class="security-notice" role="note">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+          <span>End-to-end Local LAN • No cloud accounts</span>
+        </div>
+      </div>
+    </main>
+
+    <!-- State 2: Main Connected Workstation -->
+    <main id="connectedView" class="view-panel hidden" aria-label="Transfer workspace">
+      <!-- Host Connection Ribbon -->
+      <div class="host-ribbon">
+        <div class="host-details">
+          <span class="host-label">CONNECTED TO</span>
+          <span class="host-name" id="hostDeviceName">Windows Agent</span>
+        </div>
+        <button id="btnMobileDisconnect" class="btn btn-xs btn-ghost-danger" aria-label="Disconnect session">Disconnect</button>
+      </div>
+
+      <!-- Action Cards: Send Files / Photos -->
+      <section class="section-container" aria-labelledby="sendHeading">
+        <h2 class="section-title" id="sendHeading">Send to PC</h2>
+
+        <div class="send-grid">
+          <!-- Photo & Video Picker -->
+          <label class="action-card" for="mobilePhotoPicker" tabindex="0" role="button" aria-label="Upload photos and videos from camera roll">
+            <input type="file" id="mobilePhotoPicker" accept="image/*,video/*" multiple class="hidden-input">
+            <div class="action-icon icon-cyan" aria-hidden="true">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                <circle cx="8.5" cy="8.5" r="1.5"/>
+                <polyline points="21 15 16 10 5 21"/>
+              </svg>
+            </div>
+            <span class="action-label">Photos & Videos</span>
+            <span class="action-sub">Camera Roll</span>
+          </label>
+
+          <!-- Document / Any File Picker -->
+          <label class="action-card" for="mobileFilePicker" tabindex="0" role="button" aria-label="Upload documents, PDFs, ZIPs or files">
+            <input type="file" id="mobileFilePicker" multiple class="hidden-input">
+            <div class="action-icon icon-purple" aria-hidden="true">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/>
+                <polyline points="13 2 13 9 20 9"/>
+              </svg>
+            </div>
+            <span class="action-label">Files & Docs</span>
+            <span class="action-sub">PDF, ZIP, Any</span>
+          </label>
+        </div>
+
+        <!-- Instant Text & Clipboard Sharing -->
+        <div class="text-card">
+          <textarea id="mobileTextInput" placeholder="Type text, notes, or paste a link to send to PC..." rows="2" aria-label="Text to send to PC"></textarea>
+          <div class="text-card-footer">
+            <button id="btnMobileSendText" class="btn btn-primary btn-sm">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <line x1="22" y1="2" x2="11" y2="13"/>
+                <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+              </svg>
+              Send to PC
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Active Transfer Progress Card (Shows when transferring) -->
+      <section id="transferCard" class="card-progress hidden" aria-labelledby="transferFileName" role="region">
+        <div class="progress-header">
+          <div class="progress-file-info">
+            <span class="progress-title" id="transferFileName">File.mp4</span>
+            <span class="progress-size" id="transferFileSize">0 MB</span>
+          </div>
+          <button id="btnMobileCancel" class="btn btn-xs btn-danger" aria-label="Cancel transfer">Cancel</button>
+        </div>
+
+        <div class="progress-bar-track" role="progressbar" id="mobileProgressBar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" aria-label="File transfer progress">
+          <div class="progress-bar-fill" id="transferBar"></div>
+        </div>
+
+        <div class="progress-stats-row">
+          <span id="transferPercent" class="stat-highlight">0%</span>
+          <span id="transferSpeed">0.0 MB/s</span>
+          <span id="transferEta">ETA: 0s</span>
+        </div>
+      </section>
+
+      <!-- Received Files & Messages from PC -->
+      <section class="section-container" aria-labelledby="receivedHeading">
+        <h2 class="section-title" id="receivedHeading">Received from PC</h2>
+        <div id="mobileReceivedList" class="received-list" role="feed" aria-live="polite">
+          <div class="empty-received">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            <span>Files or text sent from your PC will appear here</span>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Error / Status Toast Notification -->
+    <div id="mobileToast" class="toast hidden" role="status" aria-live="assertive"></div>
+  </div>
+
+  <script src="/shared/chime.js"></script>
+  <script src="/mobile/app.js"></script>
+</body>
+</html>
