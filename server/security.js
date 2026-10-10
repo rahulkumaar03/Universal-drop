@@ -13,8 +13,9 @@ function sanitizeFilename(originalName) {
     return `received_${Date.now()}.bin`;
   }
 
-  // Take only the basename in case paths were provided
-  let clean = path.basename(originalName);
+  // Take only the basename in case paths were provided (normalize both Windows and POSIX separators)
+  const normalized = originalName.replace(/\\/g, '/');
+  let clean = path.basename(normalized);
 
   // Remove null bytes and control characters
   clean = clean.replace(/[\x00-\x1f\x80-\x9f]/g, '');
