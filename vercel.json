@@ -1,0 +1,24 @@
+{
+  "version": 2,
+  "public": true,
+  "cleanUrls": true,
+  "rewrites": [
+    { "source": "/", "destination": "/public/index.html" },
+    { "source": "/pc", "destination": "/public/pc/index.html" },
+    { "source": "/pc/(.*)", "destination": "/public/pc/$1" },
+    { "source": "/mobile", "destination": "/public/mobile/index.html" },
+    { "source": "/mobile/(.*)", "destination": "/public/mobile/$1" },
+    { "source": "/shared/(.*)", "destination": "/public/shared/$1" },
+    { "source": "/(.*)", "destination": "/public/$1" }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "X-Frame-Options", "value": "DENY" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }
+      ]
+    }
+  ]
+}
