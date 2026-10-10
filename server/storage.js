@@ -3,14 +3,27 @@ const path = require('path');
 const config = require('./config');
 const { sanitizeFilename, isPotentiallyDangerousFile } = require('./security');
 
+const os = require('os');
+
 // Ensure directories exist
 function ensureDirectories() {
-  if (!fs.existsSync(config.RECEIVED_DIR)) {
-    fs.mkdirSync(config.RECEIVED_DIR, { recursive: true });
+  try {
+    if (!fs.existsSync(config.RECEIVED_DIR)) {
+      fs.mkdirSync(config.RECEIVED_DIR, { recursive: true });
+    }
+  } catch (err) {
+    config.RECEIVED_DIR = path.join(os.tmpdir(), 'universaldrop-received');
+    try {
+      if (!fs.existsSync(config.RECEIVED_DIR)) {
+        fs.mkdirSync(config.RECEIVED_DIR, { recursive: true });
+      }
+    } catch (_) {}
   }
-  if (!fs.existsSync(config.TEMP_DIR)) {
-    fs.mkdirSync(config.TEMP_DIR, { recursive: true });
-  }
+  try {
+    if (!fs.existsSync(config.TEMP_DIR)) {
+      fs.mkdirSync(config.TEMP_DIR, { recursive: true });
+    }
+  } catch (_) {}
 }
 
 ensureDirectories();

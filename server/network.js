@@ -57,8 +57,23 @@ function getNetworkInterfaces() {
  */
 function isLoopbackAddress(ip) {
   if (!ip) return false;
-  const cleanIp = ip.replace(/^::ffff:/, '');
+  const cleanIp = ip.replace(/^::ffff:/, '').trim().toLowerCase();
   return cleanIp === '127.0.0.1' || cleanIp === '::1' || cleanIp === 'localhost';
+}
+
+/**
+ * Returns true if an IP is loopback or belongs to one of this machine's own network adapters.
+ */
+function isLocalClient(ip) {
+  if (!ip) return false;
+  if (isLoopbackAddress(ip)) return true;
+  const cleanIp = ip.replace(/^::ffff:/, '').trim().toLowerCase();
+  try {
+    const interfaces = getNetworkInterfaces();
+    return interfaces.some(i => i.address.toLowerCase() === cleanIp);
+  } catch (e) {
+    return false;
+  }
 }
 
 /**
@@ -79,5 +94,7 @@ function getPrimaryLocalIp(selectedIp = null) {
 module.exports = {
   getNetworkInterfaces,
   getPrimaryLocalIp,
-  isLoopbackAddress
+  isLoopbackAddress,
+  isLocalClient
 };
+

@@ -7,7 +7,7 @@ const { WebSocketServer, WebSocket } = require('ws');
 const QRCode = require('qrcode');
 
 const config = require('./config');
-const { getNetworkInterfaces, getPrimaryLocalIp, isLoopbackAddress } = require('./network');
+const { getNetworkInterfaces, getPrimaryLocalIp, isLoopbackAddress, isLocalClient } = require('./network');
 const sessionManager = require('./session');
 const transferEngine = require('./transfer');
 const { sanitizeFilename, safeCompare, RateLimiter } = require('./security');
@@ -132,10 +132,15 @@ function broadcastAll(type, data) {
   broadcastToMobile(type, data);
 }
 
-// Security Guard: PC Localhost Loopback Only
+// Security Guard: PC Localhost Loopback Only (or host machine interface / cloud environment)
 function requireLocalhost(req, res, next) {
+  // Allow if running in cloud serverless environment (e.g. Vercel)
+  if (process.env.VERCEL || process.env.CLOUD_DEPLOYMENT) {
+    return next();
+  }
+
   const clientIp = req.socket?.remoteAddress || req.ip;
-  if (!isLoopbackAddress(clientIp)) {
+  if (!isLocalClient(clientIp)) {
     return res.status(403).json({ error: 'Forbidden: PC Local loopback access only' });
   }
 
@@ -145,7 +150,7 @@ function requireLocalhost(req, res, next) {
     try {
       const originUrl = new URL(origin);
       const originHost = originUrl.hostname.toLowerCase();
-      if (!isLoopbackAddress(originHost)) {
+      if (!isLocalClient(originHost)) {
         return res.status(403).json({ error: 'Forbidden: Cross-site request rejected' });
       }
     } catch (e) {
@@ -159,7 +164,7 @@ function requireLocalhost(req, res, next) {
 // WebSocket connection handling
 wss.on('connection', (ws, req) => {
   const clientIp = req.socket?.remoteAddress;
-  const isLocal = isLoopbackAddress(clientIp);
+  const isLocal = isLocalClient(clientIp) || Boolean(process.env.VERCEL);
 
   let url;
   try {
@@ -174,7 +179,7 @@ wss.on('connection', (ws, req) => {
   const token = url.searchParams.get('token');
 
   if (clientType === 'pc') {
-    // Strictly require localhost loopback for PC Dashboard WebSocket
+    // Strictly require localhost loopback or host interface for PC Dashboard WebSocket
     if (!isLocal) {
       ws.close(4403, 'PC Dashboard requires loopback connection');
       return;
@@ -182,10 +187,10 @@ wss.on('connection', (ws, req) => {
 
     // Origin check on PC WebSocket to prevent Cross-Site WebSocket Hijacking
     const origin = req.headers.origin;
-    if (origin) {
+    if (origin && !process.env.VERCEL) {
       try {
         const originUrl = new URL(origin);
-        if (!isLoopbackAddress(originUrl.hostname)) {
+        if (!isLocalClient(originUrl.hostname)) {
           ws.close(4403, 'Cross-origin PC WebSocket rejected');
           return;
         }
@@ -271,7 +276,7 @@ function handleWsMessage(ws, clientType, msg) {
 // Auth Middleware for protected transfer APIs
 function requireSessionAuth(req, res, next) {
   const clientIp = req.socket?.remoteAddress || req.ip;
-  const isLocal = isLoopbackAddress(clientIp);
+  const isLocal = isLocalClient(clientIp);
 
   // Allow local PC dashboard if role is PC
   if (isLocal && req.headers['x-client-role'] === 'pc') {
@@ -289,10 +294,21 @@ function requireSessionAuth(req, res, next) {
 }
 
 // Helper: build mobile URL
-function buildMobileUrl() {
-  const ip = getPrimaryLocalIp(selectedNetworkIp);
+function buildMobileUrl(req = null) {
   const session = sessionManager.getCurrentSession();
-  return `http://${ip}:${config.PORT}/mobile/index.html?session=${session.sessionId}&token=${session.pairingToken}&pin=${session.pairingPin}`;
+  let baseUrl;
+  const host = req?.headers?.host;
+  const isVercel = Boolean(process.env.VERCEL);
+  const isCloudHost = host && !host.includes('localhost') && !host.includes('127.0.0.1') && !host.startsWith('192.168.') && !host.startsWith('10.') && !host.startsWith('172.');
+
+  if (req && (isVercel || isCloudHost)) {
+    const proto = (req.headers['x-forwarded-proto'] || req.protocol || 'https').split(',')[0].trim();
+    baseUrl = `${proto}://${host}`;
+  } else {
+    const ip = getPrimaryLocalIp(selectedNetworkIp);
+    baseUrl = `http://${ip}:${config.PORT}`;
+  }
+  return `${baseUrl}/mobile/index.html?session=${session.sessionId}&token=${session.pairingToken}&pin=${session.pairingPin}`;
 }
 
 // REST Routes
@@ -325,10 +341,13 @@ app.post('/api/network/select-ip', requireLocalhost, (req, res) => {
   res.json({ success: true, activeIp: getPrimaryLocalIp(selectedNetworkIp) });
 });
 
-// Session status & QR Code (Restricted to Localhost PC Dashboard)
+// Session status & QR Code (Restricted to Localhost PC Dashboard or Cloud Environment)
 app.get('/api/session/current', requireLocalhost, async (req, res) => {
-  const session = sessionManager.getCurrentSession();
-  const mobileUrl = buildMobileUrl();
+  let session = sessionManager.getCurrentSession();
+  if (session.status === 'expired' || session.status === 'rejected' || (!session.pairingPin && session.status !== 'connected')) {
+    session = sessionManager.initNewSession();
+  }
+  const mobileUrl = buildMobileUrl(req);
   let qrDataUrl = '';
   try {
     qrDataUrl = await QRCode.toDataURL(mobileUrl, {
@@ -617,7 +636,7 @@ app.get('/api/files/pending', requireSessionAuth, (req, res) => {
 // Download endpoint for received files or outgoing files (Protected)
 app.get('/api/files/download/:idOrName', (req, res) => {
   const clientIp = req.socket?.remoteAddress || req.ip;
-  const isLocal = isLoopbackAddress(clientIp);
+  const isLocal = isLocalClient(clientIp);
 
   const token = req.headers['x-auth-token'] || req.query.token;
   const sessionId = req.headers['x-session-id'] || req.query.sessionId;

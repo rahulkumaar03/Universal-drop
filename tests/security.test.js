@@ -11,7 +11,7 @@ const config = require('../server/config');
 const sessionManager = require('../server/session');
 const transferEngine = require('../server/transfer');
 const { RateLimiter, isPotentiallyDangerousFile, sanitizeFilename } = require('../server/security');
-const { isLoopbackAddress } = require('../server/network');
+const { isLoopbackAddress, isLocalClient, getPrimaryLocalIp } = require('../server/network');
 const { cleanupTempDirectory } = require('../server/storage');
 
 test('Security Hardening: RateLimiter locks out after maximum failed attempts', () => {
@@ -162,3 +162,48 @@ test('Security Hardening: HTTP Security Headers and Host validation are enforced
   assert.strictEqual(res.headers.get('x-frame-options'), 'DENY');
   assert.ok(res.headers.get('content-security-policy'));
 });
+
+test('Security & Network: isLocalClient permits loopback and host machine adapter IPs, denies foreign IPs', () => {
+  assert.strictEqual(isLocalClient('127.0.0.1'), true);
+  assert.strictEqual(isLocalClient('::1'), true);
+  assert.strictEqual(isLocalClient('localhost'), true);
+  assert.strictEqual(isLocalClient('::ffff:127.0.0.1'), true);
+
+  const primaryIp = getPrimaryLocalIp();
+  if (primaryIp && primaryIp !== '127.0.0.1') {
+    assert.strictEqual(isLocalClient(primaryIp), true);
+    assert.strictEqual(isLocalClient(`::ffff:${primaryIp}`), true);
+  }
+
+  // Foreign client IP on same subnet must be rejected
+  assert.strictEqual(isLocalClient('198.51.100.77'), false);
+  assert.strictEqual(isLocalClient('10.254.254.254'), false);
+});
+
+test('Deploy & Serverless: api/index.js correctly generates session and pairing QR code', async (t) => {
+  const apiHandler = require('../api/index');
+  const TEST_PORT = 5997;
+  const server = http.createServer(apiHandler);
+
+  await new Promise(resolve => server.listen(TEST_PORT, resolve));
+  t.after(() => server.close());
+
+  const res = await fetch(`http://127.0.0.1:${TEST_PORT}/api/session/current`, {
+    headers: {
+      'host': 'universaldrop-test.vercel.app',
+      'x-forwarded-proto': 'https'
+    }
+  });
+
+  assert.strictEqual(res.status, 200);
+  const data = await res.json();
+  assert.ok(data.session);
+  assert.ok(data.session.sessionId);
+  assert.ok(data.session.pairingPin);
+  assert.strictEqual(data.session.pairingPin.length, 6);
+  assert.ok(data.qrCode);
+  assert.ok(data.qrCode.startsWith('data:image/png;base64,'));
+  assert.ok(data.mobileUrl);
+  assert.ok(data.mobileUrl.includes('/mobile/index.html?session='));
+});
+
