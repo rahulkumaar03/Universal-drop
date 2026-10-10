@@ -1,0 +1,1592 @@
+/* ==========================================================================
+   UniversalDrop — Apple/macOS Glassmorphism Design System
+   ========================================================================== */
+
+:root {
+  /* Ambient Wallpaper Tones */
+  --bg-ambient-gradient: radial-gradient(at 10% 20%, #cbe0fc 0px, transparent 50%),
+                         radial-gradient(at 90% 10%, #ddd6fe 0px, transparent 50%),
+                         radial-gradient(at 30% 90%, #bfdbfe 0px, transparent 50%),
+                         radial-gradient(at 80% 80%, #e0e7ff 0px, transparent 50%),
+                         #dbe7fb;
+
+  /* Glass Surfaces (Light Mode) */
+  --window-bg: rgba(255, 255, 255, 0.42);
+  --window-border: rgba(255, 255, 255, 0.7);
+  --sidebar-bg: rgba(255, 255, 255, 0.38);
+  --sidebar-border: rgba(255, 255, 255, 0.55);
+  --card-bg: rgba(255, 255, 255, 0.55);
+  --card-border: rgba(255, 255, 255, 0.75);
+  --card-inner-bg: rgba(255, 255, 255, 0.65);
+  --card-inner-border: rgba(255, 255, 255, 0.8);
+  
+  /* Text Tones */
+  --text-main: #0f172a;
+  --text-sub: #475569;
+  --text-muted: #64748b;
+  --text-dim: #94a3b8;
+
+  /* Accent Colors */
+  --blue-primary: #2563eb;
+  --blue-hover: #1d4ed8;
+  --blue-gradient: linear-gradient(135deg, #2563eb, #3b82f6);
+  --blue-light-badge: rgba(219, 234, 254, 0.75);
+  --green-connected: #16a34a;
+  --green-dot: #22c55e;
+  --green-light-badge: rgba(220, 252, 231, 0.8);
+  --red-danger: #dc2626;
+  --red-light-badge: rgba(254, 226, 226, 0.8);
+
+  /* Geometry & Shadows */
+  --radius-window: 22px;
+  --radius-card: 16px;
+  --radius-sub: 12px;
+  --radius-pill: 20px;
+  --shadow-window: 0 24px 60px -12px rgba(15, 23, 42, 0.12), 0 0 1px rgba(0, 0, 0, 0.08);
+  --shadow-card: 0 4px 20px rgba(15, 23, 42, 0.03), 0 1px 2px rgba(0, 0, 0, 0.02);
+  --shadow-float: 0 10px 25px -5px rgba(37, 99, 235, 0.25);
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+/* Dark Appearance (Optional Toggle) */
+body.theme-dark {
+  --bg-ambient-gradient: radial-gradient(at 10% 20%, #1e293b 0px, transparent 50%),
+                         radial-gradient(at 90% 10%, #1e1b4b 0px, transparent 50%),
+                         radial-gradient(at 30% 90%, #0f172a 0px, transparent 50%),
+                         #090d16;
+  --window-bg: rgba(22, 29, 45, 0.65);
+  --window-border: rgba(255, 255, 255, 0.12);
+  --sidebar-bg: rgba(15, 23, 42, 0.55);
+  --sidebar-border: rgba(255, 255, 255, 0.08);
+  --card-bg: rgba(30, 41, 59, 0.55);
+  --card-border: rgba(255, 255, 255, 0.1);
+  --card-inner-bg: rgba(15, 23, 42, 0.5);
+  --card-inner-border: rgba(255, 255, 255, 0.08);
+  --text-main: #f8fafc;
+  --text-sub: #cbd5e1;
+  --text-muted: #94a3b8;
+  --text-dim: #64748b;
+  --blue-light-badge: rgba(37, 99, 235, 0.2);
+}
+
+/* Base Reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  font-family: var(--font-sans);
+  background: var(--bg-ambient-gradient);
+  color: var(--text-main);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* Soft Ambient Canvas Floating Shapes */
+.ambient-canvas {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.ambient-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(90px);
+  opacity: 0.7;
+}
+
+.orb-1 {
+  width: 50vw;
+  height: 50vw;
+  top: -15%;
+  left: 10%;
+  background: radial-gradient(circle, rgba(147, 197, 253, 0.6), transparent 70%);
+}
+
+.orb-2 {
+  width: 45vw;
+  height: 45vw;
+  bottom: -10%;
+  right: 5%;
+  background: radial-gradient(circle, rgba(196, 181, 253, 0.5), transparent 70%);
+}
+
+.orb-3 {
+  width: 35vw;
+  height: 35vw;
+  top: 40%;
+  left: -10%;
+  background: radial-gradient(circle, rgba(224, 231, 255, 0.6), transparent 70%);
+}
+
+/* ==========================================================================
+   Desktop Window Container (macOS Application Shell)
+   ========================================================================== */
+
+.window-shell {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 1360px;
+  min-height: 820px;
+  background: var(--window-bg);
+  backdrop-filter: blur(45px) saturate(180%);
+  -webkit-backdrop-filter: blur(45px) saturate(180%);
+  border: 1px solid var(--window-border);
+  border-radius: var(--radius-window);
+  box-shadow: var(--shadow-window);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Traffic Lights Window Titlebar */
+.window-decorations {
+  height: 34px;
+  padding: 12px 18px 0;
+  display: flex;
+  align-items: center;
+}
+
+.traffic-lights {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.traffic-light {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.light-close {
+  background-color: #ff5f56;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.light-minimize {
+  background-color: #ffbd2e;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.light-fullscreen {
+  background-color: #27c93f;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+/* Split Workspace: Sidebar + Main Stage */
+.app-workspace {
+  display: flex;
+  flex: 1;
+  min-height: 780px;
+}
+
+/* ==========================================================================
+   Left Translucent Sidebar
+   ========================================================================== */
+
+.sidebar {
+  width: 230px;
+  background: var(--sidebar-bg);
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+  border-right: 1px solid var(--sidebar-border);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 16px 14px 20px;
+}
+
+/* Sidebar Brand Header */
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 6px 18px;
+}
+
+.brand-symbol {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--blue-gradient);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3);
+}
+
+.brand-titles {
+  display: flex;
+  flex-direction: column;
+}
+
+.app-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  color: var(--text-main);
+}
+
+.app-subtitle {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+/* Sidebar Navigation Items */
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 6px;
+  flex: 1;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 14px;
+  border-radius: var(--radius-sub);
+  border: none;
+  background: transparent;
+  color: var(--text-sub);
+  font-family: var(--font-sans);
+  font-size: 0.88rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  text-align: left;
+}
+
+.nav-item:hover {
+  background: rgba(255, 255, 255, 0.45);
+  color: var(--text-main);
+}
+
+.nav-item.active {
+  background: var(--blue-gradient);
+  color: #ffffff;
+  font-weight: 600;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.28);
+}
+
+.nav-item.active svg {
+  color: #ffffff;
+}
+
+/* Sidebar Bottom Status Card */
+.sidebar-status-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--card-inner-bg);
+  border: 1px solid var(--card-inner-border);
+  border-radius: var(--radius-sub);
+  padding: 10px 14px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+}
+
+.status-indicator-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.status-dot-green {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--green-dot);
+  box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.2);
+}
+
+.status-text-ready {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.app-version {
+  font-size: 0.72rem;
+  font-family: var(--font-mono);
+  color: var(--text-dim);
+}
+
+/* ==========================================================================
+   Main Stage Content Area
+   ========================================================================== */
+
+.main-stage {
+  flex: 1;
+  padding: 20px 28px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  overflow-y: auto;
+}
+
+/* Stage Header */
+.stage-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.welcome-heading {
+  font-size: 1.45rem;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  color: var(--text-main);
+}
+
+.welcome-subtitle {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.header-tools {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Network Dropdown Pill */
+.network-pill-container {
+  position: relative;
+}
+
+.network-pill-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-pill);
+  padding: 7px 14px;
+  color: var(--text-main);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  backdrop-filter: blur(15px);
+}
+
+.network-pill-btn:hover {
+  background: rgba(255, 255, 255, 0.85);
+  border-color: rgba(255, 255, 255, 1);
+}
+
+.wifi-icon {
+  color: var(--green-connected);
+}
+
+.chevron-icon {
+  color: var(--text-muted);
+}
+
+/* Network Popover */
+.network-popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 260px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(30px);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-card);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+  padding: 10px;
+  z-index: 50;
+  animation: fadeIn 0.15s ease;
+}
+
+body.theme-dark .network-popover {
+  background: rgba(20, 27, 43, 0.95);
+}
+
+.network-popover.hidden {
+  display: none;
+}
+
+.popover-title {
+  font-size: 0.72rem;
+  font-family: var(--font-sans);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 4px 8px 8px;
+  font-weight: 600;
+}
+
+.interface-option {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 10px;
+  border-radius: var(--radius-sub);
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--text-main);
+  transition: background 0.15s;
+}
+
+.interface-option:hover {
+  background: rgba(37, 99, 235, 0.1);
+  color: var(--blue-primary);
+}
+
+.interface-option.selected {
+  background: rgba(37, 99, 235, 0.15);
+  font-weight: 600;
+  color: var(--blue-primary);
+}
+
+/* Circular Tool Buttons */
+.circle-tool-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid var(--card-border);
+  background: var(--card-bg);
+  backdrop-filter: blur(15px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-sub);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.circle-tool-btn:hover {
+  background: rgba(255, 255, 255, 0.85);
+  color: var(--text-main);
+  transform: translateY(-1px);
+}
+
+/* ==========================================================================
+   Two-Column Bento Grid
+   ========================================================================== */
+
+.content-bento-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  flex: 1;
+}
+
+.bento-column {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Reusable Glass Card Style */
+.glass-card {
+  background: var(--card-bg);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-card);
+  padding: 20px;
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.glass-card:hover {
+  box-shadow: 0 8px 30px rgba(15, 23, 42, 0.05);
+}
+
+/* Card Caption Header */
+.card-caption-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.caption-icon-badge {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.badge-blue {
+  background: var(--blue-light-badge);
+  color: var(--blue-primary);
+}
+
+.caption-text-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.card-heading {
+  font-size: 0.96rem;
+  font-weight: 600;
+  color: var(--text-main);
+  letter-spacing: -0.2px;
+}
+
+.card-subheading {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+/* Card Header with Right Action Button */
+.card-header-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.caption-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Buttons inside Cards */
+.pill-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-pill);
+  padding: 5px 12px;
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--blue-primary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.pill-action-btn:hover {
+  background: #ffffff;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.15);
+}
+
+.pill-ghost-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-muted);
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.pill-ghost-btn:hover {
+  background: rgba(255, 255, 255, 0.6);
+  color: var(--text-main);
+}
+
+.active-count-label {
+  font-size: 0.76rem;
+  color: var(--text-muted);
+  font-family: var(--font-sans);
+}
+
+/* ==========================================================================
+   1. Connect Your Phone Card
+   ========================================================================== */
+
+.qr-display-frame {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 8px 0;
+}
+
+.qr-white-card {
+  width: 170px;
+  height: 170px;
+  background: #ffffff;
+  border-radius: var(--radius-sub);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.qr-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 4px;
+}
+
+.qr-loader {
+  position: absolute;
+  font-size: 0.8rem;
+  color: var(--text-dim);
+}
+
+/* Pair Code & Local URL Rows */
+.connection-fields-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.field-item-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.field-label {
+  font-size: 0.82rem;
+  color: var(--text-sub);
+  font-weight: 500;
+  min-width: 75px;
+}
+
+.field-value-pill {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--card-inner-bg);
+  border: 1px solid var(--card-inner-border);
+  border-radius: var(--radius-sub);
+  padding: 6px 10px;
+}
+
+.code-characters {
+  font-family: var(--font-mono);
+  font-size: 0.88rem;
+  font-weight: 600;
+  letter-spacing: 3px;
+  color: var(--text-main);
+  text-align: center;
+  width: 100%;
+}
+
+.pill-copy-btn, .input-copy-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border-radius: 6px;
+  transition: all 0.15s;
+}
+
+.pill-copy-btn:hover, .input-copy-btn:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--text-main);
+}
+
+.field-input-box {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  background: var(--card-inner-bg);
+  border: 1px solid var(--card-inner-border);
+  border-radius: var(--radius-sub);
+  padding: 6px 10px;
+}
+
+.field-input-box input {
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: var(--text-main);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  outline: none;
+}
+
+.card-info-notice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.76rem;
+  color: var(--blue-primary);
+  margin-top: 2px;
+}
+
+/* ==========================================================================
+   2. Send Files Card (Drop Zone)
+   ========================================================================== */
+
+.drop-dashed-canvas {
+  border: 1.5px dashed rgba(59, 130, 246, 0.35);
+  border-radius: var(--radius-card);
+  background: rgba(255, 255, 255, 0.3);
+  padding: 28px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.drop-dashed-canvas:hover, .drop-dashed-canvas.dragover {
+  border-color: var(--blue-primary);
+  background: rgba(219, 234, 254, 0.35);
+}
+
+.sr-only-input {
+  display: none;
+}
+
+.cloud-symbol {
+  color: var(--blue-primary);
+  margin-bottom: 2px;
+}
+
+.drop-text-primary {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.drop-text-or {
+  font-size: 0.76rem;
+  color: var(--text-dim);
+}
+
+.btn-blue-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--blue-gradient);
+  color: #ffffff;
+  border: none;
+  border-radius: var(--radius-sub);
+  padding: 9px 20px;
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+  transition: all 0.18s ease;
+}
+
+.btn-blue-action:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.35);
+}
+
+.drop-text-spec {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin-top: 6px;
+}
+
+/* ==========================================================================
+   3. Connected Devices Card
+   ========================================================================== */
+
+.device-card-state {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.device-connected-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(240, 253, 244, 0.65);
+  border: 1px solid rgba(134, 239, 172, 0.85);
+  border-radius: var(--radius-card);
+  padding: 12px 16px;
+  animation: fadeIn 0.2s ease;
+}
+
+.device-left-meta {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.device-glyph-box {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-main);
+}
+
+.device-name-title {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.device-connection-meta {
+  font-size: 0.76rem;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.connected-dot-inline {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--green-dot);
+}
+
+.connected-text-inline {
+  color: var(--green-connected);
+  font-weight: 600;
+}
+
+.device-actions-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.three-dots-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.three-dots-btn:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--text-main);
+}
+
+.btn-disconnect-subtle {
+  font-size: 0.72rem;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--red-light-badge);
+  background: var(--red-light-badge);
+  color: var(--red-danger);
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.empty-state-notice {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: var(--card-inner-bg);
+  border: 1px dashed var(--card-inner-border);
+  border-radius: var(--radius-sub);
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+/* ==========================================================================
+   4. Messages & Clipboard Card (Live Chat)
+   ========================================================================== */
+
+.chat-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.chat-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.chat-stream-box {
+  background: var(--card-inner-bg);
+  border: 1px solid var(--card-inner-border);
+  border-radius: var(--radius-sub);
+  min-height: 140px;
+  max-height: 220px;
+  overflow-y: auto;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  position: relative;
+  scrollbar-width: thin;
+}
+
+.empty-chat-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 12px;
+  text-align: center;
+  gap: 4px;
+}
+
+.empty-chat-state.hidden {
+  display: none;
+}
+
+.chat-bubbles-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.chat-bubble {
+  display: flex;
+  flex-direction: column;
+  max-width: 82%;
+  border-radius: 14px;
+  padding: 8px 12px;
+  animation: fadeIn 0.15s ease;
+  word-break: break-word;
+  position: relative;
+}
+
+.chat-bubble.bubble-incoming {
+  align-self: flex-start;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  color: var(--text-main);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
+}
+
+body.theme-dark .chat-bubble.bubble-incoming {
+  background: rgba(30, 41, 59, 0.9);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: var(--text-main);
+}
+
+.chat-bubble.bubble-outgoing {
+  align-self: flex-end;
+  background: var(--blue-gradient);
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
+}
+
+.bubble-meta-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.68rem;
+  margin-bottom: 2px;
+  opacity: 0.8;
+  font-family: var(--font-mono);
+}
+
+.bubble-text-content {
+  font-size: 0.84rem;
+  line-height: 1.4;
+  user-select: text;
+}
+
+.bubble-text-content a {
+  color: inherit;
+  text-decoration: underline;
+}
+
+.bubble-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.bubble-time {
+  font-size: 0.65rem;
+  font-family: var(--font-mono);
+  opacity: 0.7;
+}
+
+.bubble-copy-btn {
+  background: transparent;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  opacity: 0.7;
+  padding: 2px 4px;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  transition: opacity 0.15s;
+}
+
+.bubble-copy-btn:hover {
+  opacity: 1;
+  background: rgba(0, 0, 0, 0.05);
+}
+
+/* Chat Input Bar */
+.chat-compose-box {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--card-inner-bg);
+  border: 1px solid var(--card-inner-border);
+  border-radius: var(--radius-pill);
+  padding: 4px 6px 4px 10px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.02);
+}
+
+.btn-chat-attach {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.btn-chat-attach:hover {
+  background: rgba(37, 99, 235, 0.1);
+  color: var(--blue-primary);
+}
+
+.chat-bubble-image {
+  max-width: 100%;
+  max-height: 160px;
+  border-radius: 8px;
+  margin-top: 4px;
+  object-fit: contain;
+  background: rgba(0, 0, 0, 0.03);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.chat-compose-box input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  color: var(--text-main);
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+  outline: none;
+}
+
+.btn-send-message {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--blue-gradient);
+  border: none;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.3);
+  flex-shrink: 0;
+}
+
+.btn-send-message:hover {
+  transform: scale(1.05);
+}
+
+/* ==========================================================================
+   5. Live Transfers Card
+   ========================================================================== */
+
+.transfers-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 80px;
+}
+
+.empty-state-transfers {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  text-align: center;
+  gap: 4px;
+}
+
+.empty-bubble-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--blue-light-badge);
+  color: var(--blue-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 6px;
+}
+
+.empty-title {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.empty-sub {
+  font-size: 0.76rem;
+  color: var(--text-muted);
+}
+
+/* Active Transfer Row */
+.active-transfer-item {
+  background: var(--card-inner-bg);
+  border: 1px solid var(--card-inner-border);
+  border-radius: var(--radius-sub);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  animation: fadeIn 0.2s ease;
+}
+
+.transfer-top-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.transfer-file-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 65%;
+}
+
+.transfer-name {
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--text-main);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.transfer-size {
+  font-size: 0.74rem;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+}
+
+.transfer-speed-right {
+  font-size: 0.74rem;
+  font-family: var(--font-mono);
+  color: var(--blue-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-cancel-transfer {
+  background: transparent;
+  border: none;
+  color: var(--red-danger);
+  cursor: pointer;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.transfer-progress-track {
+  width: 100%;
+  height: 5px;
+  background: rgba(0, 0, 0, 0.08);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.transfer-progress-fill {
+  height: 100%;
+  background: var(--blue-gradient);
+  border-radius: 3px;
+  transition: width 0.15s ease-out;
+}
+
+/* ==========================================================================
+   5. Transfer History Card
+   ========================================================================== */
+
+.history-records-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 170px;
+  overflow-y: auto;
+}
+
+.empty-history-text {
+  text-align: center;
+  padding: 18px;
+  color: var(--text-dim);
+  font-size: 0.8rem;
+}
+
+.history-row-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--card-inner-bg);
+  border: 1px solid var(--card-inner-border);
+  border-radius: var(--radius-sub);
+  padding: 8px 12px;
+  transition: background 0.15s;
+}
+
+.history-row-item:hover {
+  background: rgba(255, 255, 255, 0.85);
+}
+
+.history-item-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.history-file-glyph {
+  color: var(--text-sub);
+}
+
+.history-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.history-filename {
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--text-main);
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.history-metadata {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.history-item-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.history-timestamp-col {
+  display: flex;
+  flex-direction: column;
+  text-align: right;
+  font-size: 0.7rem;
+  font-family: var(--font-mono);
+  color: var(--text-dim);
+}
+
+/* ==========================================================================
+   Modals & Overlays (Apple Glass Dialog)
+   ========================================================================== */
+
+.glass-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.35);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: fadeIn 0.2s ease;
+}
+
+.glass-modal-backdrop.hidden {
+  display: none;
+}
+
+.glass-modal-dialog {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(40px);
+  -webkit-backdrop-filter: blur(40px);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  border-radius: var(--radius-card);
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.15);
+  max-width: 420px;
+  width: 100%;
+  padding: 28px 24px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+body.theme-dark .glass-modal-dialog {
+  background: rgba(22, 29, 45, 0.9);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.modal-radar-visual {
+  position: relative;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+
+.radar-pulse-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid var(--blue-primary);
+  animation: radarWave 2s infinite ease-out;
+}
+
+@keyframes radarWave {
+  0% { transform: scale(0.6); opacity: 1; }
+  100% { transform: scale(1.5); opacity: 0; }
+}
+
+.radar-device-icon {
+  color: var(--blue-primary);
+  z-index: 2;
+}
+
+.modal-main-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.modal-main-desc {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+  line-height: 1.4;
+}
+
+.modal-info-panel {
+  width: 100%;
+  background: rgba(0, 0, 0, 0.04);
+  border-radius: var(--radius-sub);
+  padding: 12px 14px;
+  margin: 18px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-align: left;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.78rem;
+}
+
+.info-key {
+  color: var(--text-muted);
+}
+
+.info-val {
+  color: var(--text-main);
+}
+
+.font-semibold { font-weight: 600; }
+.font-mono { font-family: var(--font-mono); }
+.text-blue { color: var(--blue-primary); }
+
+.modal-dialog-buttons {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+}
+
+.btn-modal-cancel {
+  flex: 1;
+  padding: 9px 14px;
+  background: transparent;
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-sub);
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btn-modal-cancel:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--text-main);
+}
+
+.btn-modal-approve {
+  flex: 1;
+  padding: 9px 14px;
+  background: var(--blue-gradient);
+  border: none;
+  border-radius: var(--radius-sub);
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #ffffff;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+  transition: all 0.15s;
+}
+
+.btn-modal-approve:hover {
+  transform: translateY(-1px);
+}
+
+.btn-modal-approve.full-width {
+  flex: none;
+  width: 100%;
+}
+
+/* Help Steps */
+.help-steps-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 18px 0;
+  text-align: left;
+  width: 100%;
+}
+
+.help-step {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.step-num {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--blue-primary);
+  color: #ffffff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.step-desc {
+  font-size: 0.8rem;
+  color: var(--text-sub);
+  line-height: 1.4;
+}
+
+/* Toast */
+.glass-toast {
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(15, 23, 42, 0.88);
+  backdrop-filter: blur(20px);
+  color: #ffffff;
+  border-radius: var(--radius-pill);
+  padding: 8px 18px;
+  font-size: 0.82rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  z-index: 200;
+  animation: fadeIn 0.2s ease;
+}
+
+.glass-toast.hidden {
+  display: none;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Responsive Handling */
+@media (max-width: 1100px) {
+  .content-bento-grid {
+    grid-template-columns: 1fr;
+  }
+  .window-shell {
+    min-height: auto;
+  }
+}
+
+@media (max-width: 768px) {
+  body {
+    padding: 8px;
+  }
+  .app-workspace {
+    flex-direction: column;
+  }
+  .sidebar {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid var(--sidebar-border);
+  }
+  .sidebar-nav {
+    flex-direction: row;
+    overflow-x: auto;
+  }
+}
