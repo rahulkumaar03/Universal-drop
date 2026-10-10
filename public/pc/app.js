@@ -216,20 +216,37 @@ function handleWsEvent(msg) {
 
 // Fetch session status and QR Code
 async function loadSessionStatus() {
+  const offlineNotice = document.getElementById('qrOfflineNotice');
+  if (offlineNotice) offlineNotice.style.display = 'none';
+  if (qrLoadingSpinner) qrLoadingSpinner.style.display = 'flex';
+  if (qrCodeImg) qrCodeImg.style.display = 'none';
+
   try {
     const res = await fetch('/api/session/current');
+    if (!res.ok) {
+      throw new Error(`Server returned HTTP ${res.status}`);
+    }
     const data = await res.json();
+    if (!data || !data.session) {
+      throw new Error('Invalid session response from server');
+    }
+
     currentSession = data.session;
 
     // Spaced out pair code (e.g., "B S 8 K M F")
     const rawPin = data.session.pairingPin || '------';
     pairCodeDisplay.textContent = rawPin.split('').join(' ');
-    localUrlInput.value = data.mobileUrl;
+    if (data.mobileUrl) {
+      localUrlInput.value = data.mobileUrl;
+    }
 
     if (data.qrCode) {
+      qrCodeImg.onload = () => {
+        qrCodeImg.style.display = 'block';
+        if (qrLoadingSpinner) qrLoadingSpinner.style.display = 'none';
+        if (offlineNotice) offlineNotice.style.display = 'none';
+      };
       qrCodeImg.src = data.qrCode;
-      qrCodeImg.style.display = 'block';
-      qrLoadingSpinner.style.display = 'none';
     }
 
     if (data.session.status === 'connected' && data.session.clientDevice) {
@@ -239,6 +256,11 @@ async function loadSessionStatus() {
     }
   } catch (err) {
     console.error('[UniversalDrop] Failed to load session:', err);
+    if (qrLoadingSpinner) qrLoadingSpinner.style.display = 'none';
+    if (qrCodeImg) qrCodeImg.style.display = 'none';
+    if (offlineNotice) offlineNotice.style.display = 'flex';
+    localUrlInput.value = 'Desktop Agent Offline (start agent on PC)';
+    pairCodeDisplay.textContent = '- - - - - -';
   }
 }
 
@@ -785,6 +807,16 @@ function setupEventListeners() {
     await loadSessionStatus();
     showToast('Generated fresh pairing session & QR code');
   });
+
+  // Retry desktop agent connection
+  const btnRetryAgent = document.getElementById('btnRetryAgent');
+  if (btnRetryAgent) {
+    btnRetryAgent.addEventListener('click', () => {
+      loadSessionStatus();
+      loadNetworkInterfaces();
+      initWebSocket();
+    });
+  }
 
   // Clear history
   btnClearHistory.addEventListener('click', () => {
