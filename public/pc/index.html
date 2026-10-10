@@ -135,7 +135,7 @@
                   <path d="M8.53 16.11a6 6 0 0 1 6.95 0"/>
                   <line x1="12" y1="20" x2="12.01" y2="20"/>
                 </svg>
-                <span id="activeNetworkLabel">Wi-Fi 192.168.1.9</span>
+                <span id="activeNetworkLabel">Local Network</span>
                 <svg class="chevron-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <polyline points="6 9 12 15 18 9"/>
                 </svg>
@@ -200,23 +200,12 @@
 
               <!-- Clean QR Code Display Container -->
               <div class="qr-display-frame">
-                <div class="qr-white-card">
+                <div class="qr-white-card" id="qrWhiteCard">
+                  <div id="qrCodeContainer" class="qr-code-svg-wrap"></div>
                   <img id="qrCodeImg" src="" alt="Pairing QR Code" class="qr-image" style="display: none;">
                   <div id="qrLoadingSpinner" class="qr-loader">
                     <div class="qr-spinner-ring"></div>
-                    <span>Loading QR...</span>
-                  </div>
-                  <div id="qrOfflineNotice" class="qr-offline-notice" style="display: none;">
-                    <div class="offline-icon-wrap">
-                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="10"/>
-                        <line x1="12" y1="8" x2="12" y2="12"/>
-                        <line x1="12" y1="16" x2="12.01" y2="16"/>
-                      </svg>
-                    </div>
-                    <span class="offline-title">Desktop Agent Offline</span>
-                    <p class="offline-desc">Start agent on PC (`npm start`)</p>
-                    <button type="button" id="btnRetryAgent" class="btn-retry-agent">Retry</button>
+                    <span>Generating QR...</span>
                   </div>
                 </div>
               </div>
@@ -531,6 +520,7 @@
 
   <!-- Scripts -->
   <script src="/shared/chime.js"></script>
+  <script src="/shared/qrcode.min.js"></script>
   <script src="/pc/app.js"></script>
 </body>
 </html>
