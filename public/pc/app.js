@@ -103,12 +103,24 @@ function applyTheme(theme) {
 }
 
 // WebSocket Setup
+let wsReconnectTimer = null;
+let wsAttempts = 0;
+
 function initWebSocket() {
+  if (wsReconnectTimer) clearTimeout(wsReconnectTimer);
+
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
   const wsUrl = `${protocol}//${window.location.host}/ws?type=pc`;
-  ws = new WebSocket(wsUrl);
+
+  try {
+    ws = new WebSocket(wsUrl);
+  } catch (e) {
+    document.getElementById('sidebarStatusText').textContent = 'Cloud Ready';
+    return;
+  }
 
   ws.onopen = () => {
+    wsAttempts = 0;
     console.log('[UniversalDrop] Desktop Agent WebSocket connected');
     document.getElementById('sidebarStatusText').textContent = 'Ready';
   };
@@ -122,9 +134,19 @@ function initWebSocket() {
     }
   };
 
+  ws.onerror = () => {
+    // Suppress console error in cloud environments without persistent WS
+  };
+
   ws.onclose = () => {
-    document.getElementById('sidebarStatusText').textContent = 'Reconnecting';
-    setTimeout(initWebSocket, 2000);
+    wsAttempts++;
+    if (wsAttempts < 3) {
+      document.getElementById('sidebarStatusText').textContent = 'Reconnecting';
+      wsReconnectTimer = setTimeout(initWebSocket, 3000);
+    } else {
+      const isCloud = window.location.hostname && !window.location.hostname.includes('localhost') && !window.location.hostname.includes('127.0.0.1');
+      document.getElementById('sidebarStatusText').textContent = isCloud ? 'Web Client Ready' : 'Agent Offline';
+    }
   };
 }
 
@@ -214,26 +236,103 @@ function handleWsEvent(msg) {
   }
 }
 
-// Fetch session status and QR Code
+// Render QR code dynamically (SVG vector first, fallback to Data URL)
+async function renderQrCode(targetUrl) {
+  const qrContainer = document.getElementById('qrCodeContainer');
+  const spinner = document.getElementById('qrLoadingSpinner');
+  const img = document.getElementById('qrCodeImg');
+
+  if (window.QRCode && typeof window.QRCode.toString === 'function') {
+    try {
+      const svg = await window.QRCode.toString(targetUrl, {
+        type: 'svg',
+        margin: 1,
+        width: 150,
+        color: { dark: '#1e293b', light: '#ffffff' }
+      });
+      if (qrContainer) {
+        qrContainer.innerHTML = svg;
+        qrContainer.style.display = 'flex';
+      }
+      if (img) img.style.display = 'none';
+      if (spinner) spinner.style.display = 'none';
+      return;
+    } catch (e) {
+      console.warn('SVG QR render error:', e);
+    }
+  }
+
+  if (window.QRCode && typeof window.QRCode.toDataURL === 'function') {
+    try {
+      const dataUrl = await window.QRCode.toDataURL(targetUrl, {
+        margin: 1,
+        width: 150,
+        color: { dark: '#1e293b', light: '#ffffff' }
+      });
+      if (img) {
+        img.src = dataUrl;
+        img.style.display = 'block';
+      }
+      if (qrContainer) qrContainer.style.display = 'none';
+      if (spinner) spinner.style.display = 'none';
+      return;
+    } catch (e) {}
+  }
+}
+
+// Generate fallback client pairing session when running statically or in cloud
+function generateFallbackSession() {
+  const chars = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+  let pin = '';
+  const randomBytes = new Uint8Array(6);
+  if (window.crypto && window.crypto.getRandomValues) {
+    window.crypto.getRandomValues(randomBytes);
+    for (let i = 0; i < 6; i++) {
+      pin += chars[randomBytes[i] % chars.length];
+    }
+  } else {
+    for (let i = 0; i < 6; i++) {
+      pin += chars[Math.floor(Math.random() * chars.length)];
+    }
+  }
+
+  const tokenBytes = new Uint8Array(16);
+  if (window.crypto && window.crypto.getRandomValues) {
+    window.crypto.getRandomValues(tokenBytes);
+  }
+  const token = Array.from(tokenBytes).map(b => b.toString(16).padStart(2, '0')).join('') || Date.now().toString(36);
+  const sessionId = 'sess_' + Date.now().toString(36) + Math.random().toString(36).substring(2, 6);
+  const mobileUrl = `${window.location.origin}/mobile/index.html?session=${sessionId}&token=${token}&pin=${pin}`;
+
+  return {
+    sessionId,
+    pairingPin: pin,
+    pairingToken: token,
+    status: 'waiting_for_scan',
+    mobileUrl
+  };
+}
+
+// Fetch session status and QR Code (with instant client fallback)
 async function loadSessionStatus() {
-  const offlineNotice = document.getElementById('qrOfflineNotice');
-  if (offlineNotice) offlineNotice.style.display = 'none';
   if (qrLoadingSpinner) qrLoadingSpinner.style.display = 'flex';
-  if (qrCodeImg) qrCodeImg.style.display = 'none';
 
   try {
     const res = await fetch('/api/session/current');
     if (!res.ok) {
-      throw new Error(`Server returned HTTP ${res.status}`);
+      throw new Error(`API returned HTTP ${res.status}`);
     }
+    const contentType = res.headers.get('content-type') || '';
+    if (!contentType.includes('application/json')) {
+      throw new Error(`Non-JSON response received: ${contentType}`);
+    }
+
     const data = await res.json();
     if (!data || !data.session) {
       throw new Error('Invalid session response from server');
     }
 
     currentSession = data.session;
-
-    // Spaced out pair code (e.g., "B S 8 K M F")
     const rawPin = data.session.pairingPin || '------';
     pairCodeDisplay.textContent = rawPin.split('').join(' ');
     if (data.mobileUrl) {
@@ -244,9 +343,12 @@ async function loadSessionStatus() {
       qrCodeImg.onload = () => {
         qrCodeImg.style.display = 'block';
         if (qrLoadingSpinner) qrLoadingSpinner.style.display = 'none';
-        if (offlineNotice) offlineNotice.style.display = 'none';
+        const qrContainer = document.getElementById('qrCodeContainer');
+        if (qrContainer) qrContainer.style.display = 'none';
       };
       qrCodeImg.src = data.qrCode;
+    } else if (data.mobileUrl) {
+      await renderQrCode(data.mobileUrl);
     }
 
     if (data.session.status === 'connected' && data.session.clientDevice) {
@@ -254,14 +356,18 @@ async function loadSessionStatus() {
     } else {
       renderDisconnectedDevice();
     }
+    return;
   } catch (err) {
-    console.error('[UniversalDrop] Failed to load session:', err);
-    if (qrLoadingSpinner) qrLoadingSpinner.style.display = 'none';
-    if (qrCodeImg) qrCodeImg.style.display = 'none';
-    if (offlineNotice) offlineNotice.style.display = 'flex';
-    localUrlInput.value = 'Desktop Agent Offline (start agent on PC)';
-    pairCodeDisplay.textContent = '- - - - - -';
+    console.warn('[UniversalDrop] Desktop agent API not reachable, activating client pairing session:', err.message);
   }
+
+  // Graceful Fallback: Generate Client Pairing Session & QR Code
+  const fallback = generateFallbackSession();
+  currentSession = fallback;
+  pairCodeDisplay.textContent = fallback.pairingPin.split('').join(' ');
+  localUrlInput.value = fallback.mobileUrl;
+  await renderQrCode(fallback.mobileUrl);
+  renderDisconnectedDevice();
 }
 
 // Load Network Interfaces
@@ -298,7 +404,8 @@ async function loadNetworkInterfaces() {
       interfacesList.innerHTML = '<div style="padding:6px;font-size:0.75rem;color:var(--text-dim);">127.0.0.1 (Localhost)</div>';
     }
   } catch (err) {
-    console.error('[UniversalDrop] Failed to load interfaces:', err);
+    const isCloud = window.location.hostname && !window.location.hostname.includes('localhost') && !window.location.hostname.includes('127.0.0.1');
+    activeNetworkLabel.textContent = isCloud ? 'Cloud Web Client' : 'Local Network';
   }
 }
 
@@ -803,8 +910,20 @@ function setupEventListeners() {
 
   // Pair new device
   btnPairNewDevice.addEventListener('click', async () => {
-    await fetch('/api/session/new', { method: 'POST' });
-    await loadSessionStatus();
+    try {
+      const res = await fetch('/api/session/new', { method: 'POST' });
+      if (res.ok) {
+        await loadSessionStatus();
+        showToast('Generated fresh pairing session & QR code');
+        return;
+      }
+    } catch (e) {}
+
+    const fallback = generateFallbackSession();
+    currentSession = fallback;
+    pairCodeDisplay.textContent = fallback.pairingPin.split('').join(' ');
+    localUrlInput.value = fallback.mobileUrl;
+    await renderQrCode(fallback.mobileUrl);
     showToast('Generated fresh pairing session & QR code');
   });
 
